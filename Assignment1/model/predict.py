@@ -32,6 +32,7 @@ class ImageModelPredictor:
     
 class NextWordPredictor:
     def __init__(self, model_path: str):
+        print("Initiatin Next Word")
         if model_path is None:
             raise ValueError("Model path is required")
         elif not os.path.exists(model_path):

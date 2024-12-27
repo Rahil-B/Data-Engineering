@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, File, UploadFile
+from pydantic import BaseModel
 from model.predict import TextModelPredictor, ImageModelPredictor, NextWordPredictor
 from model.monitor import monitor_prediction_time
 import cv2
@@ -11,7 +12,7 @@ next_word_predictor = NextWordPredictor("model/svm_text_model.pkl")
 
 @router.get("/text/predict")
 @monitor_prediction_time
-def predict(text: str):
+async def predict(text: str):
     try:
         result = text_predictor.predict(text)
         print(result)
@@ -27,7 +28,7 @@ async def img_predict(img: UploadFile = File(...)):
         # Read the image file
         contents = await img.read()
         # Convert the image to a numpy array
-        nparr = np.fromstring(contents, np.uint8)
+        nparr = np.frombuffer(contents, np.uint8)
         # Decode the image
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         # Preprocess the image if necessary
@@ -35,20 +36,23 @@ async def img_predict(img: UploadFile = File(...)):
         img = cv2.resize(img, (64, 64)).flatten()
         # Predict the class
         print("Predicting image class")
-        result = image_classifier.predict(contents)
+        result =  image_classifier.predict(img)
         print(result)
-        return {"status": "success", "result": str(result[0])}
+        return {"status": "success", "result": str(result)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
 
+class TextRequest(BaseModel):
+    text: str
+
 @router.post("/text/predict_next_word")
 @monitor_prediction_time
-async def text_predict(text: str):
+async def text_predict(request: TextRequest):
     try:
         print("Predicting next word")
-        result = next_word_predictor.predict(text)
+        result = next_word_predictor.predict(request.text)
         print(result)
-        return {"status": "success", "result": result["prediction"], "probability": result["probability"]}
+        return {"status": "success", "result": str(result)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

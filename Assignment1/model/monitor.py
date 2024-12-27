@@ -4,9 +4,9 @@ from functools import wraps
 
 def monitor_prediction_time(func):
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         start_time = time.time()
-        result = func(*args, **kwargs)
+        result = await func(*args, **kwargs)
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"Prediction time: {elapsed_time:.4f} seconds")
